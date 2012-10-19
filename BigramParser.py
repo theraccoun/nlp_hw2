@@ -10,8 +10,8 @@ class BigramParser:
 
 		#Get the unique words
 		keyset = set([])
+		line_count = 0
 		for line in bigram_file:
-			line = line.lower()
 			line = line.replace('\n', '')
 			line = line.replace('\t', ' ')
 			line = line.split(' ')
@@ -21,6 +21,17 @@ class BigramParser:
 				self.bigram_dict[line[0]] = []
 				self.bigram_dict[line[0]].append(line)
 
+			line_count += 1
+
+		nondups = []
+		for fc in self.bigram_dict['for']:
+			for nd in nondups:
+				if nd == fc[1]:
+					print "DUP: " , fc[1]
+			
+			nondups.append(fc[1])
+			
+
 		print len(self.bigram_dict)
 
 
@@ -29,10 +40,19 @@ class BigramParser:
 	def parseString(self, test_str):
 		lexImprover = LexiconImprover(None)
 
+		parsed_tag = ''
+
 		test_word = ''
 		cur_char_pointer = 0
 		while cur_char_pointer < len(test_str):
-			self.get_best_bigram_from_cur_char(cur_char_pointer, test_str)
+			best_bigram = self.get_best_bigram_from_cur_char(cur_char_pointer, test_str)
+			if len(best_bigram) > 0:
+				cur_char_pointer += len(best_bigram[0]) + len(best_bigram[1])
+				parsed_tag += best_bigram[0] + best_bigram[1]
+			else:
+				break
+		
+		print "ANSWER: " , parsed_tag
 	
 	def format_string(self, test_str):
 		test_str = test_str.replace('#','')
@@ -44,6 +64,9 @@ class BigramParser:
 		test_word = ''
 		print astring
 		possible_bigrams = []
+		for f in self.bigram_dict['for']:
+			if f[1][0] == 'a' and len(f[1]) == 1:
+				print f
 		while cur_char_pointer < len(astring):
 			test_word += astring[cur_char_pointer]
 			if self.bigram_dict.has_key(test_word):
@@ -72,6 +95,8 @@ class BigramParser:
 		#Determine highest count bigram and return that
 		biggest_count = 0
 		biggest_bigram = []
+		print "pos: " , possible_bigrams
+		raw_input()
 		for pbg in possible_bigrams:
 			if pbg[2] > biggest_count:
 				print pbg[2]
@@ -87,7 +112,7 @@ class BigramParser:
 def main():
 	bigram_file = open('count_2w.txt', 'r')
 	bparser = BigramParser(bigram_file)
-	test_tag = bparser.format_string('#iaskedforit')
+	test_tag = bparser.format_string('#iaskedforapplesauce')
 	bparser.parseString(test_tag)
 	
 
