@@ -36,7 +36,7 @@ class BigramParser:
 		parsed_tag = ''
 
 		test_word = ''
-		self.generate_all_possible_bigrams(test_str, 0, [], 1)
+		self.get_best_bigram(test_str, 0, [], 1)
 		# while cur_char_pointer < len(test_str):
 		# 	best_bigram = self.get_best_bigram_from_cur_char(cur_char_pointer, test_str)
 		# 	if len(best_bigram) > 0:
@@ -78,11 +78,11 @@ class BigramParser:
 					tprob = math.log(float(tprob)/nc, 2)
 
 
-		print "Prob of " , word, " given " , prev_word , " = " , tprob					
+		# print "Prob of " , word, " given " , prev_word , " = " , tprob					
 		return total_prob + tprob
 
 
-	def generate_all_possible_bigrams(self, astring, cur_char_pointer, prev_bigs, total_prob):
+	def get_best_bigram(self, astring, cur_char_pointer, prev_bigs, total_prob):
 		possible_bigrams = []
 		main_pointer = 0
 
@@ -96,6 +96,8 @@ class BigramParser:
 		# print "prev_bigs: " , prev_bigs
 		# print "pos_new_words: " , pos_first_words
 		for word in pos_first_words:
+			if not self.lexImprover.checkIfValidWord(word):
+				continue
 			prev_copy = [b for b in prev_bigs]
 			prob = 1
 			prev_word = None
@@ -109,14 +111,13 @@ class BigramParser:
 			next_pointer = cur_char_pointer + len(word)
 
 			if next_pointer == len(astring):
-				print "at end of string"
 				if prob > self.max_prob:
 					self.max_prob = prob
 					self.best_bigram = [p for p in prev_copy]
-					print "new max prob: " , self.max_prob
-					print "new best bigram: " , self.best_bigram
-			print "prev_copy: " , prev_copy
-			print "cur_prob: " , prob
+			# 		print "new max prob: " , self.max_prob
+			# 		print "new best bigram: " , self.best_bigram
+			# print "prev_copy: " , prev_copy
+			# print "cur_prob: " , prob
 			# if next_pointer > len(astring) - 1:
 				# print "total prob: " , total_prob
 				# print "max_prob: " , self.max_prob				
@@ -128,7 +129,7 @@ class BigramParser:
 
 				# 	return
 
-			self.generate_all_possible_bigrams(astring, next_pointer, prev_copy, prob)
+			self.get_best_bigram(astring, next_pointer, prev_copy, prob)
 		
 			# return
 
@@ -213,13 +214,25 @@ class BigramParser:
 
 		return biggest_bigram
 
+	def parseAllHashTags(self, sourcePath, outputFilePath):
+		source = open(sourcePath, "r")
+		outputFile = open(outputFilePath, 'w')
 
+		for line in source:
+			print "Processing: " , line
+			self.best_bigram = []
+			self.max_prob = 0
+			self.get_best_bigram(line, 0, [], 1)
+			print "Best parse = " , self.best_bigram
+			outputFile.write("%s\n" % self.best_bigram)
+			print "Best parse = " , self.best_bigram
 
 def main():
 	bigram_file = open('count_2w.txt', 'r')
 	bparser = BigramParser(bigram_file)
-	test_tag = bparser.format_string('#ilikeyou')
+	test_tag = bparser.format_string('#itiscooloutside')
 	bparser.parseString(test_tag)
+	# bparser.parseAllHashTags("hw2-test1.txt", "maccoun_assgn2-output.txt")
 	
 
 if __name__ == "__main__":
