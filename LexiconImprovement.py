@@ -28,8 +28,7 @@ class LexiconImprover:
     def __init__(self, lexicon):
         self.lexicon = lexicon
 
-    def checkIfValidWord(self, word):
-
+    def check_if_valid_short_word(self, word):
         if word == None:
             return False
 
@@ -41,10 +40,15 @@ class LexiconImprover:
 #            return False
 #        if len(word) == 4 and not self.validFourLetterWords.__contains__(word):
 #            isValidWord = False
-
         return True
+
+    def checkIfValidWord(self, word):
+        if word not in self.lexicon:
+            return False
+        else:
+            return True
 
     def improveLexicon(self):
 
-        newLexicon = [word for word in self.lexicon if self.checkIfValidWord(word)]
+        newLexicon = [word for word in self.lexicon if self.check_if_valid_short_word(word)]
         return newLexicon

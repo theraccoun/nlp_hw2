@@ -6,7 +6,22 @@ import math
 class BigramParser:
 
 	def __init__(self, bigram_file):
-		self.lexImprover = LexiconImprover(None)
+		bigWordsFile = open('bigwordlist.txt', 'r')
+
+
+		NUMBER_OF_WORDS = 75000
+		lexicon = []
+
+		for i in range(NUMBER_OF_WORDS):
+		    line = bigWordsFile.readline()
+		    wordOnly = line.split()[0]
+		    wordOnly.replace(" " , "")
+		    if len(wordOnly) >= 1:
+		        lexicon.append(wordOnly)
+
+		li = LexiconImprover(lexicon)
+		self.lexImprover = li.improveLexicon()
+
 		self.pos_bigram_combination = []
 		self.bigram_dict = {}
 		self.best_bigram = []
@@ -31,11 +46,6 @@ class BigramParser:
 
 
 	def parseString(self, test_str):
-		lexImprover = LexiconImprover(None)
-
-		parsed_tag = ''
-
-		test_word = ''
 		self.get_best_bigram(test_str, 0, [], 1)
 		# while cur_char_pointer < len(test_str):
 		# 	best_bigram = self.get_best_bigram_from_cur_char(cur_char_pointer, test_str)
@@ -48,6 +58,7 @@ class BigramParser:
 		print "ANSWER: " , self.best_bigram
 	
 	def format_string(self, test_str):
+		test_str = test_str.replace('\n', '')
 		test_str = test_str.replace('#','')
 		test_str = test_str.lower()
 
@@ -55,7 +66,7 @@ class BigramParser:
 
 	def find_argmax_of_counts(self, word, prev_word, total_prob):
 		tprob = 0.0001
-		is_valid_word_pair = self.lexImprover.checkIfValidWord(word) and self.lexImprover.checkIfValidWord(prev_word)
+		is_valid_word_pair = word in self.lexImprover and prev_word in self.lexImprover
 		if is_valid_word_pair or prev_word == None:
 			pos_bigs_from_dict = []
 
@@ -66,6 +77,8 @@ class BigramParser:
 					for dictbg in pos_bigs_from_dict:
 						if dictbg[1] == word:
 							tprob = math.log(float(dictbg[2]), 2)
+				# else:
+				# 	tprob = 4.0
 			else:
 				if self.bigram_dict.has_key(word):
 					pos_bigs_from_dict = self.bigram_dict[word]
@@ -96,28 +109,31 @@ class BigramParser:
 		# print "prev_bigs: " , prev_bigs
 		# print "pos_new_words: " , pos_first_words
 		for word in pos_first_words:
-			if not self.lexImprover.checkIfValidWord(word):
+			if word not in self.lexImprover:
 				continue
 			prev_copy = [b for b in prev_bigs]
-			prob = 1
+			edge_prob = 1
 			prev_word = None
 			if len(prev_copy) > 0:
 				prev_word = prev_copy[len(prev_copy) - 1]
 			
-			prob = self.find_argmax_of_counts(word, prev_word, total_prob)
+			edge_prob = self.find_argmax_of_counts(word, prev_word, total_prob)
 			prev_copy.append(word)
 
 			#Get the next pointer
 			next_pointer = cur_char_pointer + len(word)
 
 			if next_pointer == len(astring):
-				if prob > self.max_prob:
-					self.max_prob = prob
+				normal_prob = edge_prob/len(prev_copy)
+				if normal_prob > self.max_prob:
+					self.max_prob = normal_prob
 					self.best_bigram = [p for p in prev_copy]
+			# 		print "normal_prob: " , normal_prob
 			# 		print "new max prob: " , self.max_prob
 			# 		print "new best bigram: " , self.best_bigram
 			# print "prev_copy: " , prev_copy
-			# print "cur_prob: " , prob
+			# print "cur_prob: " , edge_prob
+			# raw_input()
 			# if next_pointer > len(astring) - 1:
 				# print "total prob: " , total_prob
 				# print "max_prob: " , self.max_prob				
@@ -129,7 +145,7 @@ class BigramParser:
 
 				# 	return
 
-			self.get_best_bigram(astring, next_pointer, prev_copy, prob)
+			self.get_best_bigram(astring, next_pointer, prev_copy, edge_prob)
 		
 			# return
 
@@ -219,20 +235,20 @@ class BigramParser:
 		outputFile = open(outputFilePath, 'w')
 
 		for line in source:
+			line = self.format_string(line)
 			print "Processing: " , line
-			self.best_bigram = []
+			self.best_bigram = None
 			self.max_prob = 0
 			self.get_best_bigram(line, 0, [], 1)
-			print "Best parse = " , self.best_bigram
 			outputFile.write("%s\n" % self.best_bigram)
 			print "Best parse = " , self.best_bigram
 
 def main():
 	bigram_file = open('count_2w.txt', 'r')
 	bparser = BigramParser(bigram_file)
-	test_tag = bparser.format_string('#itiscooloutside')
-	bparser.parseString(test_tag)
-	# bparser.parseAllHashTags("hw2-test1.txt", "maccoun_assgn2-output.txt")
+	test_tag = bparser.format_string('#isstillread\n')
+	# bparser.parseString(test_tag)
+	bparser.parseAllHashTags("hw2-test1.txt", "maccoun_assgn2-output.txt")
 	
 
 if __name__ == "__main__":
